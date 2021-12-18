@@ -11,5 +11,8 @@ namespace BlazorPeliculas.Shared.Entidades
 
         [Required(ErrorMessage = "El campo {0} es requerido")]
         public string Nombre { get; set; }
+
+        public List<GeneroPelicula> GeneroPeliculas { get; set; }
+
     }
 }
