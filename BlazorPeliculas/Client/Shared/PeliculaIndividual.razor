@@ -5,15 +5,16 @@
     </a>
 
     <p style="maxwidth: 225px; height: 44px; font-size: 15px; font-weight:bold"><a href="@urlPeliculas">@Pelicula.TituloCortado</a></p>
-
+    <p style="maxwidth: 225px; height: 44px; font-size: 15px; font-weight:bold"><a href="@urlPeliculas">@Pelicula.Lanzamiento.Value.ToString("yyyy")</a></p>
     
     <div>
-        <a class="btn btn-info">Edit</a>
+        <a class="btn btn-info" href="peliculas/editar/@Pelicula.Id">Editar</a>
         <button type="button" class="btn btn-danger"
             @onclick="@(() => EliminarPelicula.InvokeAsync(Pelicula))">
             Borrar
         </button>
     </div>
+
  </div>
 
 
@@ -27,6 +28,8 @@
 
     protected override void OnInitialized()
     {
-        urlPeliculas = $"pelicula/";
+        urlPeliculas = $"pelicula/{Pelicula?.Id}/{Pelicula?.Titulo?.Replace(" ","-")}";
     }
+
+
 }

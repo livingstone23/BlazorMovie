@@ -19,12 +19,92 @@ namespace BlazorPeliculas.Client.Repositorios
             this.httpClient = httpClient;
         }
 
+        /// <summary>
+        /// Propiedad para deserealizar
+        /// </summary>
+        private JsonSerializerOptions OpcionesPorDefectoJSON => new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
+
+        /// <summary>
+        /// #1
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="url"></param>
+        /// <param name="enviar"></param>
+        /// <returns></returns>
         public async Task<HttpResponseWrapper<object>> Post<T>(string url, T enviar)
         {
             var enviarJSON = JsonSerializer.Serialize(enviar);
             var enviarContent = new StringContent(enviarJSON, Encoding.UTF8, "application/json");
             var responseHttp = await httpClient.PostAsync(url, enviarContent);
             return new HttpResponseWrapper<object>(null, !responseHttp.IsSuccessStatusCode, responseHttp);
+        }
+
+
+
+
+
+        /// <summary>
+        /// #2
+        /// Metodo que permite deserealizar una respuesta de una peticion HttPost
+        /// Permite indicar el tipo de dato que desea de respuesta
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="TResponse"></typeparam>
+        /// <param name="url"></param>
+        /// <param name="enviar"></param>
+        /// <returns></returns>
+        public async Task<HttpResponseWrapper<TResponse>> Post<T, TResponse>(string url, T enviar)
+        {
+            var enviarJSON = JsonSerializer.Serialize(enviar);
+            var enviarContent = new StringContent(enviarJSON, Encoding.UTF8, "application/json");
+            var responseHttp = await httpClient.PostAsync(url, enviarContent);
+            if (responseHttp.IsSuccessStatusCode)
+            {
+                var response = await DeserializarRespuesta<TResponse>(responseHttp, OpcionesPorDefectoJSON);
+                return new HttpResponseWrapper<TResponse>(response, false, responseHttp);
+            }
+            else
+            {
+                return new HttpResponseWrapper<TResponse>(default, true, responseHttp);
+            }
+        }
+
+
+        /// <summary>
+        /// #4
+        /// Metodo que permite deserealizar una respuesta de una peticion HttGest
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        public async Task<HttpResponseWrapper<T>> Get<T>(string url)
+        {
+            var responseHTTP = await httpClient.GetAsync(url);
+
+            if (responseHTTP.IsSuccessStatusCode)
+            {
+                var response = await DeserializarRespuesta<T>(responseHTTP, OpcionesPorDefectoJSON);
+                return new HttpResponseWrapper<T>(response, false, responseHTTP);
+            }
+            else
+            {
+                return new HttpResponseWrapper<T>(default, true, responseHTTP);
+            }
+        }
+
+
+        /// <summary>
+        /// #3
+        /// Permite centralizar la logica deserealizacion , del metodo #2
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="httpResponse"></param>
+        /// <param name="jsonSerializerOptions"></param>
+        /// <returns></returns>
+        private async Task<T> DeserializarRespuesta<T>(HttpResponseMessage httpResponse, JsonSerializerOptions jsonSerializerOptions)
+        {
+            var responseString = await httpResponse.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<T>(responseString, jsonSerializerOptions);
         }
 
         public List<Pelicula> ObtenerPeliculas()

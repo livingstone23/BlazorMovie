@@ -1,4 +1,4 @@
-﻿    <EditForm Model="Pelicula" OnValidSubmit="OnValidSubmit">
+﻿    <EditForm Model="Pelicula" OnValidSubmit="OnDataAnnonationsValidated">
         <DataAnnotationsValidator />
         <div class="form-group">
             <label>Título:</label>
@@ -28,6 +28,7 @@
                 <ValidationMessage For="@(() => Pelicula.Lanzamiento)" />
             </div>
         </div>
+
         <div class="form-group form-markdown">
             <InputMarkdown @bind-Value="@Pelicula.Resumen"
                            For="@(() => Pelicula.Resumen)"
@@ -41,14 +42,15 @@
                                   NoSeleccionados="NoSeleccionados"></SelectorMultiple>
             </div>
         </div>
-        <div class="form-group">
+
+       @*<div class="form-group">
             <label>Actores:</label>
             <div>
                 <SelectorMultipleTypeahead Context="persona"
                                            SearchMethod="BuscarActores" 
                                            ElementosSeleccionados="ActoresSeleccionados">
                     <MyListTemplate>
-                        @persona.Nombre
+                        @persona.Nombre / <input type="text" placeholder="Personaje" @bind="persona.Personaje" />
                     </MyListTemplate>
                     <MyResultTemplate>
                         <img style="width: 50px" src="@persona.Foto" />
@@ -56,7 +58,7 @@
                     </MyResultTemplate>
                 </SelectorMultipleTypeahead>
             </div>
-        </div>
+        </div>*@
 
         <button type="submit" class="btn btn-success">Salvar Película</button>
     </EditForm>
@@ -75,27 +77,45 @@
 
     protected override void OnInitialized()
     {
-        Seleccionados = GenerosSeleccionados.Select(x => new SelectorMultipleModel(x.Id.ToString(), x.Nombre)).ToList();
+        //Seleccionados = GenerosSeleccionados.Select(x => new SelectorMultipleModel(x.Id.ToString(), x.Nombre)).ToList();
         NoSeleccionados = GenerosNoSeleccionados.Select(x => new SelectorMultipleModel(x.Id.ToString(), x.Nombre)).ToList();
-        if (!string.IsNullOrWhiteSpace(Pelicula.Poster))
-        {
-            posterTemporal = Pelicula.Poster;
-            Pelicula.Poster = null;
-        }
+        //if (!string.IsNullOrWhiteSpace(Pelicula.Poster))
+        //{
+        //    posterTemporal = Pelicula.Poster;
+        //    Pelicula.Poster = null;
+        //}
     }
 
-    private void ImagenSeleccionada(string imagenBase64)
-    {
-        Pelicula.Poster = imagenBase64;
-    }
+    //private void ImagenSeleccionada(string imagenBase64)
+    //{
+    //    Pelicula.Poster = imagenBase64;
+    //}
 
-    private async Task<IEnumerable<Persona>> BuscarActores(string searchText)
+    //private async Task<IEnumerable<Persona>> BuscarActores(string searchText)
+    //{
+    //    return new List<Persona>()
+    //    {
+    //        new Persona(){Id=1, Nombre="Tom Holland", Foto = "https://m.media-amazon.com/images/M/MV5BNTAzMzA3NjQwOF5BMl5BanBnXkFtZTgwMDUzODQ5MTI@._V1_UY317_CR23,0,214,317_AL_.jpg"},
+    //        new Persona(){Id=2, Nombre="Tom Hanks", Foto = "https://m.media-amazon.com/images/M/MV5BMTQ2MjMwNDA3Nl5BMl5BanBnXkFtZTcwMTA2NDY3NQ@@._V1_UY317_CR2,0,214,317_AL_.jpg"}
+    //    };
+    //}
+
+    ///// <summary>
+    ///// Permite proprocesamiento del objeto antes del enviar al componente padre
+    ///// </summary>
+    ///// <returns></returns>
+    private async Task OnDataAnnonationsValidated()
     {
-        return new List<Persona>()
-        {
-            new Persona(){Id=1, Nombre="Tom Holland", Foto = "https://m.media-amazon.com/images/M/MV5BNTAzMzA3NjQwOF5BMl5BanBnXkFtZTgwMDUzODQ5MTI@._V1_UY317_CR23,0,214,317_AL_.jpg"},
-            new Persona(){Id=2, Nombre="Tom Hanks", Foto = "https://m.media-amazon.com/images/M/MV5BMTQ2MjMwNDA3Nl5BMl5BanBnXkFtZTcwMTA2NDY3NQ@@._V1_UY317_CR2,0,214,317_AL_.jpg"}
-        };
+        ///Permite seleccionar las llaves de esos generos
+        //Pelicula.GenerosPelicula = Seleccionados
+        //    .Select(x => new GeneroPelicula { GeneroId = int.Parse(x.Llave) }).ToList();
+
+        //Pelicula.PeliculasActor = ActoresSeleccionados
+        //    .Select(x => new PeliculaActor { PersonaId = x.Id, Personaje = x.Personaje }).ToList();
+
+        //if (!string.IsNullOrWhiteSpace(Pelicula.Poster)) { posterTemporal = null; }
+
+        await OnValidSubmit.InvokeAsync(null);
     }
 
 }

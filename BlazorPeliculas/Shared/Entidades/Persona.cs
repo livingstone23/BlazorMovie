@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace BlazorPeliculas.Shared.Entidades
@@ -19,6 +20,7 @@ namespace BlazorPeliculas.Shared.Entidades
 
         public List<PeliculaActor> PeliculasActor { get; set; }
 
+        [NotMapped]
         public string Personaje { get; set; }
 
         public override bool Equals(object obj)

@@ -1,6 +1,7 @@
 ﻿@page "/generos/crear"
 @inject IRepositorio repositorio
 @inject NavigationManager navigationManager
+@inject IMostrarMensajes mostrarMensajes
 
 <h3>Crear Género</h3>
 
@@ -15,8 +16,8 @@
         var httpResponse = await repositorio.Post("api/generos", Genero);
         if (httpResponse.Error)
         {
-            var body = await httpResponse.HttpResponseMessage.Content.ReadAsStreamAsync();
-            Console.WriteLine(body);
+            var body = await httpResponse.GetBody();
+            await mostrarMensajes.MostrarMensajeError(body);
         } 
         else
         {

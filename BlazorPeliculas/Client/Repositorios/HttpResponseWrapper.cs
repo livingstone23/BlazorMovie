@@ -24,5 +24,8 @@ namespace BlazorPeliculas.Client.Repositorios
         {
             return await HttpResponseMessage.Content.ReadAsStringAsync();
         }
+
+        
+
     }
 }

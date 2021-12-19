@@ -1,4 +1,5 @@
-﻿using BlazorPeliculas.Client.Repositorios;
+﻿using BlazorPeliculas.Client.Helpers;
+using BlazorPeliculas.Client.Repositorios;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -25,6 +26,8 @@ namespace BlazorPeliculas.Client
         {
 
             services.AddScoped<IRepositorio, Repositorio>();
+            services.AddScoped<IMostrarMensajes, MostrarMensajes>();
+
         }
     }
 }
