@@ -19,10 +19,14 @@ namespace BlazorPeliculas.Client.Repositorios
             this.httpClient = httpClient;
         }
 
+
+
         /// <summary>
         /// Propiedad para deserealizar
         /// </summary>
         private JsonSerializerOptions OpcionesPorDefectoJSON => new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
+
+
 
         /// <summary>
         /// #1
@@ -38,8 +42,6 @@ namespace BlazorPeliculas.Client.Repositorios
             var responseHttp = await httpClient.PostAsync(url, enviarContent);
             return new HttpResponseWrapper<object>(null, !responseHttp.IsSuccessStatusCode, responseHttp);
         }
-
-
 
 
 
@@ -70,6 +72,23 @@ namespace BlazorPeliculas.Client.Repositorios
         }
 
 
+
+        /// <summary>
+        /// #3
+        /// Permite centralizar la logica deserealizacion , del metodo #2
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="httpResponse"></param>
+        /// <param name="jsonSerializerOptions"></param>
+        /// <returns></returns>
+        private async Task<T> DeserializarRespuesta<T>(HttpResponseMessage httpResponse, JsonSerializerOptions jsonSerializerOptions)
+        {
+            var responseString = await httpResponse.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<T>(responseString, jsonSerializerOptions);
+        }
+
+
+
         /// <summary>
         /// #4
         /// Metodo que permite deserealizar una respuesta de una peticion HttGest
@@ -93,19 +112,32 @@ namespace BlazorPeliculas.Client.Repositorios
         }
 
 
+
         /// <summary>
-        /// #3
-        /// Permite centralizar la logica deserealizacion , del metodo #2
+        /// #5
+        /// Metodo que permite un consumo de respuesta para consumo metodo put
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="httpResponse"></param>
-        /// <param name="jsonSerializerOptions"></param>
+        /// <param name="url"></param>
+        /// <param name="enviar"></param>
         /// <returns></returns>
-        private async Task<T> DeserializarRespuesta<T>(HttpResponseMessage httpResponse, JsonSerializerOptions jsonSerializerOptions)
+        public async Task<HttpResponseWrapper<object>> Put<T>(string url, T enviar)
         {
-            var responseString = await httpResponse.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<T>(responseString, jsonSerializerOptions);
+            var enviarJSON = JsonSerializer.Serialize(enviar);
+            var enviarContent = new StringContent(enviarJSON, Encoding.UTF8, "application/json");
+            var responseHttp = await httpClient.PutAsync(url, enviarContent);
+            return new HttpResponseWrapper<object>(null, !responseHttp.IsSuccessStatusCode, responseHttp);
         }
+
+
+
+        public async Task<HttpResponseWrapper<object>> Delete(string url)
+        {
+            var responseHTTP = await httpClient.DeleteAsync(url);
+            return new HttpResponseWrapper<object>(null, !responseHTTP.IsSuccessStatusCode, responseHTTP);
+        }
+
+
 
         public List<Pelicula> ObtenerPeliculas()
         {
@@ -119,5 +151,8 @@ namespace BlazorPeliculas.Client.Repositorios
                     , Poster="https://1.bp.blogspot.com/-rOnPGT4DWnM/UlW7RfymSpI/AAAAAAAAE2I/bhMMoy8Dduw/s1600/Inception.jpg"}
                 };
         }
+
+
+
     }
 }

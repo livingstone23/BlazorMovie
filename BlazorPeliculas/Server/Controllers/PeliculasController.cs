@@ -1,10 +1,12 @@
-﻿using BlazorPeliculas.Server.Helpers;
+﻿using AutoMapper;
+using BlazorPeliculas.Server.Helpers;
 using BlazorPeliculas.Shared.DTOs;
 using BlazorPeliculas.Shared.Entidades;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,12 +17,15 @@ namespace BlazorPeliculas.Server.Controllers
     public class PeliculasController : ControllerBase
     {
         private readonly ApplicationDbContext context;
+        private readonly IMapper mapper;
         //private readonly IAlmacenadorDeArchivos almacenadorDeArchivos;
 
-        public PeliculasController(ApplicationDbContext context)
+        public PeliculasController(ApplicationDbContext context, IMapper mapper)
         {
             this.context = context;
+            this.mapper = mapper;
             //this.almacenadorDeArchivos = almacenadorDeArchivos;
+
         }
 
         //[HttpPost]
@@ -118,6 +123,131 @@ namespace BlazorPeliculas.Server.Controllers
             model.PromedioVotos = promedioVotos;
             model.VotoUsuario = votoUsuario;
             return model;
+        }
+
+
+
+        [HttpGet("actualizar/{id}")]
+        public async Task<ActionResult<PeliculaActualizacionDTO>> PutGet(int id)
+        {
+            var peliculaActionResult = await Get(id);
+            if (peliculaActionResult.Result is NotFoundResult) { return NotFound(); }
+
+            var peliculaVisualizarDTO = peliculaActionResult.Value;
+            var generosSeleccionadosIds = peliculaVisualizarDTO.Generos.Select(x => x.Id).ToList();
+            var generosNoSeleccionados = await context.Generos
+                .Where(x => !generosSeleccionadosIds.Contains(x.Id))
+                .ToListAsync();
+
+            var model = new PeliculaActualizacionDTO();
+            model.Pelicula = peliculaVisualizarDTO.Pelicula;
+            model.GenerosNoSeleccionados = generosNoSeleccionados;
+            model.GenerosSeleccionados = peliculaVisualizarDTO.Generos;
+            model.Actores = peliculaVisualizarDTO.Actores;
+            return model;
+        }
+
+
+
+        [HttpPut]
+        public async Task<ActionResult> Put(Pelicula pelicula)
+        {
+            var peliculaDB = await context.Peliculas.FirstOrDefaultAsync(x => x.Id == pelicula.Id);
+
+            if (peliculaDB == null) { return NotFound(); }
+
+            peliculaDB = mapper.Map(pelicula, peliculaDB);
+
+            if (!string.IsNullOrWhiteSpace(pelicula.Poster))
+            {
+                var posterImagen = Convert.FromBase64String(pelicula.Poster);
+                //peliculaDB.Poster = await almacenadorDeArchivos.EditarArchivo(posterImagen,"jpg", "peliculas", peliculaDB.Poster);
+            }
+
+            await context.Database.ExecuteSqlInterpolatedAsync($"delete from GenerosPeliculas WHERE PeliculaId = {pelicula.Id}; delete from PeliculasActores where PeliculaId = {pelicula.Id}");
+
+            if (pelicula.PeliculasActor != null)
+            {
+                for (int i = 0; i < pelicula.PeliculasActor.Count; i++)
+                {
+                    pelicula.PeliculasActor[i].Orden = i + 1;
+                }
+            }
+
+            peliculaDB.PeliculasActor = pelicula.PeliculasActor;
+            peliculaDB.GenerosPelicula = pelicula.GenerosPelicula;
+
+            await context.SaveChangesAsync();
+            return NoContent();
+
+        }
+
+
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> Delete(int id)
+        {
+            var existe = await context.Peliculas.AnyAsync(x => x.Id == id);
+            if (!existe) { return NotFound(); }
+            context.Remove(new Pelicula { Id = id });
+            await context.SaveChangesAsync();
+            return NoContent();
+        }
+
+
+
+        [HttpGet("filtrar")]
+        public async Task<ActionResult<List<Pelicula>>> Get([FromQuery] ParametrosBusquedaPeliculas parametrosBusqueda)
+        {
+            ///Para realizar ejecucion diferida
+            var peliculasQueryable = context.Peliculas.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(parametrosBusqueda.Titulo))
+            {
+                peliculasQueryable = peliculasQueryable
+                    .Where(x => x.Titulo.ToLower().Contains(parametrosBusqueda.Titulo.ToLower()));
+            }
+
+            if (parametrosBusqueda.EnCartelera)
+            {
+                peliculasQueryable = peliculasQueryable.Where(x => x.EnCartelera);
+            }
+
+            if (parametrosBusqueda.Estrenos)
+            {
+                var hoy = DateTime.Today;
+                peliculasQueryable = peliculasQueryable.Where(x => x.Lanzamiento >= hoy);
+            }
+
+            if (parametrosBusqueda.GeneroId != 0)
+            {
+                peliculasQueryable = peliculasQueryable
+                    .Where(x => x.GenerosPelicula.Select(y => y.GeneroId)
+                    .Contains(parametrosBusqueda.GeneroId));
+            }
+
+            // TODO: Implementar votacion
+
+            await HttpContext.InsertarParametrosPaginacionEnRespuesta(peliculasQueryable, parametrosBusqueda.CantidadRegistros);
+
+            var peliculas = await peliculasQueryable.Paginar(parametrosBusqueda.Paginacion).ToListAsync();
+
+            return peliculas;
+        }
+
+        public class ParametrosBusquedaPeliculas
+        {
+            public int Pagina { get; set; } = 1;
+            public int CantidadRegistros { get; set; } = 10;
+            public Paginacion Paginacion
+            {
+                get { return new Paginacion() { Pagina = Pagina, CantidadRegistros = CantidadRegistros }; }
+            }
+            public string Titulo { get; set; }
+            public int GeneroId { get; set; }
+            public bool EnCartelera { get; set; }
+            public bool Estrenos { get; set; }
+            public bool MasVotadas { get; set; }
         }
 
 

@@ -38,6 +38,24 @@ namespace BlazorPeliculas.Server.Controllers
             return await context.Generos.FirstOrDefaultAsync(x => x.Id == id);
         }
 
+        [HttpPut]
+        public async Task<ActionResult> Put(Genero genero)
+        {
+            context.Attach(genero).State = EntityState.Modified;
+            await context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> Delete(int id)
+        {
+            var existe = await context.Generos.AnyAsync(x => x.Id == id);
+            if (!existe) { return NotFound(); }
+            context.Remove(new Genero { Id = id });
+            await context.SaveChangesAsync();
+            return NoContent();
+        }
+
 
     }
 

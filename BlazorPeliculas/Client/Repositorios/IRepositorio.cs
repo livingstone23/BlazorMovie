@@ -17,7 +17,7 @@ namespace BlazorPeliculas.Client.Repositorios
         Task<HttpResponseWrapper<TResponse>> Post<T, TResponse>(string url, T enviar);
 
         Task<HttpResponseWrapper<T>> Get<T>(string url);
-
-
+        Task<HttpResponseWrapper<object>> Put<T>(string url, T enviar);
+        Task<HttpResponseWrapper<object>> Delete(string url);
     }
 }
